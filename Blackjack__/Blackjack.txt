@@ -1,0 +1,123 @@
+# 8 bộ bài 52 lá, 7 người chơi, trong đó có 1 nhà cái và 6 người chơi
+# các lá bài biểu thị điểm số của nó, (10, J, Q, K) đều có 10 điểm
+# lá bài A sẽ được tính điểm theo cách: nếu tổng điểm các lá bài con lại <= 10 thì A được tính là 21, còn nếu >=11 thì lá A được tính là 1đ
+# mỗi người đươc chia 2 lá bài: trong đó nếu mới chia xong mà dược 21đ tức là BlackJack ---> win luôn
+# chơi hết bài hoặc hết tiền
+
+#------------------------------------Text------------------------------------
+* env (tạm thời) = 1 array 1 chiều
+        (Mặc định sau trong mỗi array thông tin nhỏ thì thông tin nhà cái ở vị trí đầu tiên: ID=0, tiền,.....)
+*   Ở trên bàn chơi:
+        * [0:10] : (số lượng) lá bài điểm còn lại ở trong bộ bài trên bàn ứng lần lượt số số điểm từ 1 --> 10
+
+        * [10:17]: số tiền còn lại của mỗi người chơi
+        * [17:29] : 12h index để lưu số tiền cược của 6 người chơi (12 bộ bài)
+        * [29:43] : Tình trạng các bộ bài của người chơi (1 là bộ bài được chơi (chọn action) cho mỗi bộ trên tay, 0 là không được chơi bộ bài đó (bỏ lượt hoặc quá điểm))
+                ex: [10 10 10 10 10 10 10] 
+        * [43] : bộ nào đang được action
+* Players: (Một người chơi có thể thấy được các thông tin như sau):
+        
+        * [0:20] : số lượng lá bài điểm (ứng với lá từ A đến 10đ) có trên tay người chơi
+        * [20:22] : tổng điểm các lá bài trên tay (đã tính theo luật A)(2 bộ)
+
+        ---> 22*7 + 44 = 198
+
+# thứ tự thực hiện
+1. env[43] : vị trí tại env[29:43], i = (0 --> 13), i//2 = ID người chơi
+        env[43] tăng dần dẫn đến các vị trí trong env[29:43] cũng được check theo thứ tự
+        env_i[29:43] = 1 được thực hiện, env_i[29:43] = 0 không được thực hiện
+2. người chơi chọn mức cược
+        ([action 0: 5],
+        [action 1: 10],
+        [action 2: 25],
+        [action 3: 100])
+        Tiền cược sẽ được chuyển vào env[17:29]
+        env[10:17] : số tiền còn lại của mỗi người trừ đi số tiền cược tương ứng
+3. Người chơi chọn action để thực hiện:
+
+                action 4 : bỏ lượt thì env_i[29:43] chuyển từ 1 thành 0
+                action 5 : env[0:10] lá bài điểm tương ứng được rút sẽ có (số lượng -= 1)
+                        Players[0:20] : tại vị trí tương ứng của lá bài điểm vừa lấy sẽ tăng lên 1
+                        Players[20:22] : tổng điểm thay đổi
+                        Check luật (nếu >= 22đ) thì env[29:43] tại vị trí tương ứng từ 1 sẽ chuyển thành 0
+                        sau đó check cặp của từng người trong env[30:44] nếu trở thành 00 thì dẫn dến env[23:30] tại vị trí tương ứng chuyển thành -1
+                action 6 (rút 1 lá và x2 tiền): env[0:10] lá bài điểm tương ứng được rút sẽ có (số lượng -= 1)
+                        Players[0:20]: tại vị trí tương ứng của lá bài điểm vừa lấy sẽ tăng lên 1
+                        env[17:29] : tiền cược sẽ gấp đôi tại vị trí đã cược trước đó
+                        env[10:17] : số tiền cược tương ứng bị trừ đi
+                        Check luật giống như [26]
+                action 7: tách thành 2 bộ: 
+                        Players[1] ---> Players[11] + 10
+                        env[29:43] : số 0 sẽ trở thành 1 (1 người chơi 2 bộ)
+                        env[17:29] : số tiền cược sẽ được thêm vào vị trí tương ứng với bộ bài  
+                        env[10:17] : số tiền cược tương ứng bị trừ đi
+                        (check xem người chơi còn đủ tiền để tách bài không)
+                action 8 : dành cho nhà cái (elif đến chết)
+4. env[29:43] = [00 00 00 00 00 00 00] tức là game nhỏ đã end
+        so sánh điểm Players_i[20:22] (i:0--->6) (đk: Players[20:22] <= 21)
+        env[29:31] : nhà cái
+        Người chơi nào có điểm lớn hơn nhà cái: (win) --> env[10:17] nhận lại tiền + 2*số tiền đã cược trong env[17:29]
+        Người chơi có điểm thấp hơn nhà cái ---> tiền nhà cái + số tiền cược tương ứng của người chơi thua trong env[17:23]
+
+5. Check env[10:17] : người chơi nào có số tiền còn lại <5 (không đủ cược mức thấp nhất)
+        --->env[29:43] : tại 2 bộ bài của người chơi i đều chuyển thành 00 đến hết game lớn
+6. env[0:10] : tổng số lá bài nếu <14 : thực hiện ván cuối và kết thúc game
+  # (reset lại bộ bài và cho người chơi thực hiện action cho ván cuối)
+        env[11:17]: số tiền của mỗi người còn lại sau khi kết thúc game
+        a =  env[11:17](end) - env[11:17](start) =[..,..,..,..,..,..]
+        người chơi nào lãi nhiều tiền nhất: (a_i: max ----> người chơi i thắng)
+        mọi a_i < 0 ----> nhà cái t
+        * env bổ sung 
+                env[198]: đếm số ván đã chơi
+
+
+        * Bổ sung env[206]: lưu lá bài úp của cái
+#--------------------------------------state.Text---------------------------------
+
+
+                (state được lấy ra từ env)
+        Mô phỏng bằng 1 numpy array 1 chiều:
+        * P_state[0:7]: số tiền còn lại của mỗi người chơi
+
+        * P_state[7:147] : số lá bài trên tay điểm của mình, lần lượt phía sau là những người chơi khác
+                [7:27], [27:47], [47:67], [67:87], [87:107], [107:127], [127:147]
+        * P_state[147] : số tiền mình đã cược 
+        * P_state[148] : số ván đã chơi
+        * P_state[149:156] : số ván nhỏ đa thắng của mỗi người
+       
+
+        * bổ sung: cược xong thì chia luôn 2 lá
+
+
+        check_bug: row - 288
+        
+
+
+        action 6: check: x2 tiền thì dừng luôn (done)
+        nhà cái <= 16đ thì bốc thêm  
+        BlackJack ăn 3:2 (done)
+        env[206]: lưu lá bài ẩn của nhà cái
+
+        bổ sung check: check lại điều kiện nhà cái để end ván nhỏ
+        
+
+
+
+ #-----------------------------------------------text_blj----------------------------------------#
+
+
+ENV_STATE:
+        * env_state[0:10] : (số lượng) lá bài điểm còn lại ở trong bộ bài trên bàn ứng lần lượt số số điểm từ 1 --> 10
+
+        * env_state[10:17]: số tiền còn lại của mỗi người chơi
+        * env_state[17:29] : 12h index để lưu số tiền cược của 6 người chơi (12 bộ bài)
+        * env_state[29:43] : Tình trạng các bộ bài của người chơi (1 là bộ bài được chơi (chọn action) cho mỗi bộ trên tay, 0 là không được chơi bộ bài đó (bỏ lượt hoặc quá điểm))
+                ex: [10 10 10 10 10 10 10] 
+        * env_state[43] : bộ nào đang được action
+        * env_state[44:198] : Các bộ bài và điểm của người chơi (7 người: 20 index đầu là số lượng lá bài của từng bộ, 2 index cuối là điểm của 2 bộ)
+        * env_state[198] : đếm số ván nhỏ đã chơi
+        * env_state[199:206] : số ván nhỏ đã thắng
+        * env_state[206] : lưu lá bài úp của nhà cái
+
+
+* Lưu ý: thực hiện action 7: env_state[43] += 1

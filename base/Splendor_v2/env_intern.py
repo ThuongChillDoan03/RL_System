@@ -1116,7 +1116,7 @@ def one_game_numba_2(p0, list_other, per0, per1, per2, per3, per4, per5, per6, p
             id_card_normal = get_id_card_normal_in_lv(lv1, lv2, lv3)
             print(f'Người chơi {p_idx+1} chọn úp thẻ trên bàn:', get_id_card(id_card_normal[id_action]), id_action,id_card_normal)
         elif act in range(28, 31):
-
+            id_action = act-28
             print(f'Người chơi {p_idx+1} chọn úp thẻ ẩn:', get_id_card(env[161 + act-28]))
         elif act in range(31, 36):
             id_action = act-31

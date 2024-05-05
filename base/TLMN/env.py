@@ -11,12 +11,13 @@ def reset(e_state):
     temp = np.arange(52)
     np.random.shuffle(temp)
     for i in range(4):
-        e_state[temp[13*i:13*(i+1)]] = i
+        e_state[temp[13*i:13*(i+1)]] = i (# i là người số mấy nhận bài)
 
     e_state[52] = 0
     e_state[53:57] = 1
     e_state[57] = 0
     e_state[58:60] = 0
+    
 
 @njit
 def get_player_state(e_state):

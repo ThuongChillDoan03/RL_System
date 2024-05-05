@@ -1,0 +1,58 @@
+Luật chơi bài
+   * Bộ bài 52 lá, gồm 4 người chơi
+   * Giá trị mỗi lá từ 1-9 = số điểm của lá, J,Q,K = 10đ
+   * Luật chơi:
+         * Chia mỗi người 7 lá
+         * Lá tiếp theo lật lên vào bộ bài ngửa
+         * 50 điểm thì win round
+         * quá 100đ thì bị loại khỏi vòng chơi
+         * win roud sẽ ko tính điểm vào điểm tổng
+         * người thua round sẽ cộng điểm vào điểm tổng
+         * Ai hết lá trên tay thì win round
+      * Người chơi còn lại cuối cùng sẽ chiến thắng
+      * Được phép đánh nối vào bộ dây hoặc bộ 3, mỗi người chỉ đc nối 1 Lá
+
+#####________________________________________________________________ENV_STATE_________________________________________________________#####
+
+*  Mỗi người có 8 lá trên tay(cả bốc)
+*  env_state[0:52]: bộ úp trên bàn
+*  env_state[52:104] : bộ ngửa trên bàn
+*  env_state[104] : người nào đang được chơi
+*  env_state[105:109] : tình trạng người chơi trong round
+*  env_state[109:161] : bài trên tay người thứ 1
+*  env_state[161:213] : bài trên tay người thứ 2
+*  env_state[213:265] : bài trên tay người thứ 3
+*  env_state[265:317] : bài trên tay người thứ 4 (1 là lá trên tay)
+*  env_state[317:321] : điểm của người chơi (điểm ván lớn)
+*  env_state[321:325] : tình trạng còn trong bàn chơi hay không
+*  env_state[325] : turn
+*  env_state[326] : phase
+*  env_state[327:331] : điểm ván nhỏ
+*  env_state[331:600] : bộ đánh ra trên bàn
+*  env_state[600] : tình trạng check start_round
+*  env_state[601] : số turn đã đánh trong round nhỏ
+*  env_state[602] : game đã end chưa
+
+
+####_____________________________________________________________P_state________________________________________________________________####
+
+*  P_state[0:52] : bài trên tay mình
+*  P_state[52:104] : bài ngửa trên bàn
+*  P_state[104:108] : tình trạng người chơi còn trong bàn không
+*  P_state[108:112] : điểm của mỗi người chơi
+*  P_state[112] : phase
+*  P_state[113:125] : các bộ bài người chơi khác đánh ra
+*  P_state[125] : số lá úp còn lại
+*  P_state[126] : kiểm tra xem đã hết ván hay chưa
+
+#--------------------------------------------------------------ACTION0--------------------------------------------------------------------####
+
+*  Action a --> len(arr) : 
+*  Action b --> len(arr):len(arr_straight_subsequences) : đánh bộ dây
+*  Action c --> len(arr_straight_subsequences):len(arr_breed_set) : đánh bộ tam, tứ 
+*  Action bỏ lượt: 
+
+
+(còn reset ván và hàm trạng thái)
+
+* bộ 3: thứ tự 256:260 :A (256:thiếu cơ, 257: thiếu rô, 258: thiếu tép, 259: thiếu bích)
